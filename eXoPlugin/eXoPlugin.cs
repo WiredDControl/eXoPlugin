@@ -16,20 +16,18 @@ namespace eXoPlugin
         {
 
             var basePath = new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName;   // Launchbox path
-            int gamefoldersCount = 0;
             string gamePath = "";
 
-            string[] gamefolders = Path.GetDirectoryName(selectedGames[0].ApplicationPath).Split(Path.DirectorySeparatorChar);
-            if (Path.GetDirectoryName(selectedGames[0].ApplicationPath).Contains("eXo\\Magazines\\"))
+            // make sure it's a game from an eXo-project
+            if (!Path.GetDirectoryName(selectedGames[0].ApplicationPath).Contains("eXo\\eXo"))
             {
-                gamefoldersCount = gamefolders.Length;
-                gamePath = Path.Combine(basePath, "eXo", "Magazines", gamefolders[gamefoldersCount - 1], Path.GetFileNameWithoutExtension(selectedGames[0].ApplicationPath));
+                return Array.Empty<IGameMenuItem>();
             }
             else
+            // get the path to the games folder
             {
-                gamefoldersCount = gamefolders.Length;
-                gamePath = Path.Combine(basePath, "eXo", gamefolders[gamefoldersCount - 3], gamefolders[gamefoldersCount - 2], gamefolders[gamefoldersCount - 1]);
-
+                string gamefolder = Path.GetDirectoryName(selectedGames[0].ApplicationPath);
+                gamePath = Path.Combine(basePath, gamefolder);
             }
 
             if (PluginHelper.StateManager.IsBigBox)
@@ -47,78 +45,59 @@ namespace eXoPlugin
                 return Array.Empty<IGameMenuItem>();
             }
 
+            // If there's no .../Extras folder, skip all and return an empty array
             if (!Directory.Exists(Path.Combine(gamePath, "Extras")))
             {
                 return Array.Empty<IGameMenuItem>();
             }
 
-            var itemList = new List<IGameMenuItem>();
 
-            // Add the alternate launcher (Pixel Perfect) menu entry
+
+
+            var returnList = new List<GameMenuItem>();
+
+
+            //if there is an alternate launcher for the game, add it
+            if (File.Exists(Path.Combine(gamePath, "Extras", "Alternate Launcher.bat")))
+            {
+                returnList.Add(new GameMenuItem(selectedGames[0], Path.Combine(gamePath, "Extras", "Alternate Launcher.bat"), "Pixel Perfect & Shader Options"));
+            }
+
+
+
+
+            // Add the base pack extras files as menu entries
+            var enitemList = new List<IGameMenuItem>();
             foreach (var filename in new DirectoryInfo(Path.Combine(gamePath, "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
             {
-                itemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                enitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
             }
 
-
-            if (itemList.Count > 0)
+            if (enitemList.Count > 0)
             {
-                if (Path.GetDirectoryName(selectedGames[0].ApplicationPath).Contains("eXo\\Magazines\\"))
-                {
-                    if (File.Exists(Path.Combine(gamePath, "Extras", "Alternate Launcher.bat")))
-                    {
-                        return new[]
-                        {
-                        new GameMenuItem(selectedGames[0], Path.Combine(gamePath, "Extras", "Alternate Launcher.bat"), "Pixel Perfect & Shader Options"),
-                        new GameMenuItem("magazine articles", itemList, "english-flag.png")
-                    };
-                    }
-                    else
-                    {
-                        return new[]
-                        {
-                        new GameMenuItem("magazine articles", itemList, "english-flag.png")
-                    };
-                    }
-                }
-                else
-                {
-                    if (File.Exists(Path.Combine(gamePath, "Extras", "Alternate Launcher.bat")))
-                    {
-                        return new[]
-                        {
-                        new GameMenuItem(selectedGames[0], Path.Combine(gamePath, "Extras", "Alternate Launcher.bat"), "Pixel Perfect & Shader Options"),
-                        new GameMenuItem("English Extras", itemList, "english-flag.png")
-                    };
-                    }
-                    else
-                    {
-                        return new[]
-                        {
-                        new GameMenuItem("English Extras", itemList, "english-flag.png")
-                    };
-                    }
-                }
-
-
-                    
+                returnList.Add(new GameMenuItem("English Extras", enitemList, "english-flag.png"));
             }
-            else
+
+
+
+
+            // Add the language pack extra files as menue entries
+            String language = "";
+
+            // do it for each installed language pack
+            foreach (var languagefile in new DirectoryInfo(Path.Combine(basePath, "eXo", "util")).GetFiles("*.LANG"))
             {
-                if (File.Exists(Path.Combine(gamePath, "Extras", "Alternate Launcher.bat")))
-                {
-                    return new[]
-                    {
-                        new GameMenuItem(selectedGames[0], Path.Combine(gamePath, "Extras", "Alternate Launcher.bat"), "Pixel Perfect & Shader Options")
-                    };
-                }
-                else
-                {
-                    return Array.Empty<IGameMenuItem>();
-                }
+                //get language from .LANG filename, e.g. GERMAN.LANG --> german
+                language = Path.GetFileNameWithoutExtension(languagefile.ToString().ToLower());
+
             }
-        }
+
+
+            return returnList;
+
+         }
     }
+
 
     public class GameMenuItem : IGameMenuItem
     {

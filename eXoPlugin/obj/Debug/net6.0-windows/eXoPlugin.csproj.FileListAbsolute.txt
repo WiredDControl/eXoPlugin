@@ -1,0 +1,14 @@
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\bin\Debug\net6.0-windows\eXoPlugin.deps.json
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\bin\Debug\net6.0-windows\eXoPlugin.dll
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\bin\Debug\net6.0-windows\eXoPlugin.pdb
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\bin\Debug\net6.0-windows\Unbroken.LaunchBox.Plugins.dll
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.csproj.AssemblyReference.cache
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.AssemblyInfoInputs.cache
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.AssemblyInfo.cs
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.csproj.CoreCompileInputs.cache
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.csproj.CopyComplete
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.dll
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\refint\eXoPlugin.dll
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\eXoPlugin.pdb
+C:\Users\andre\source\repos\eXoPlugin\eXoPlugin\obj\Debug\net6.0-windows\ref\eXoPlugin.dll
