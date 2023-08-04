@@ -54,10 +54,12 @@ namespace eXoPlugin
 
             var itemList = new List<IGameMenuItem>();
 
+            // Add the alternate launcher (Pixel Perfect) menu entry
             foreach (var filename in new DirectoryInfo(Path.Combine(gamePath, "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
             {
                 itemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
             }
+
 
             if (itemList.Count > 0)
             {
