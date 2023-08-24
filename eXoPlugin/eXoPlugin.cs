@@ -5,10 +5,11 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Windows;
+//using System.Windows;
 using System.Windows.Forms;
 using Unbroken.LaunchBox.Plugins;
 using Unbroken.LaunchBox.Plugins.Data;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Header;
 
 namespace eXoPlugin
 {
@@ -18,6 +19,17 @@ namespace eXoPlugin
 
         public void OnEventRaised(string eventType)
         {
+
+            //if (eventType == SystemEventTypes.LaunchBoxShutdownBeginning)
+            //{
+            //    var eventbasePath = new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName;
+            //    if (File.Exists(Path.Combine(eventbasePath, "eXo", "Update", "userwantsupdate.yes")))
+            //    {
+            //        System.Windows.MessageBox.Show("eXoDOS Update starts");
+            //        Process.Start(Path.Combine(eventbasePath, "eXo", "Update", "update.bat"));
+            //    }
+            //}
+
             // wait for Launchbox to be loaded completely
             if (eventType == SystemEventTypes.LaunchBoxStartupCompleted
                 || eventType == SystemEventTypes.BigBoxStartupCompleted)
@@ -45,14 +57,16 @@ namespace eXoPlugin
 
                     DialogResult d;
                     d = System.Windows.Forms.MessageBox.Show(
-                        message,
+                        new Form { TopMost = true },
+                        message.ToString(),
                         "FAQ",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Information,
                         MessageBoxDefaultButton.Button1,
                         0,
                         "https://www.retro-exo.com/FAQ.html",
-                        "");
+                        ""
+                        );
 
                     // if the user answers the dialog box with "yes":
                     if (d == DialogResult.Yes)
@@ -115,6 +129,26 @@ namespace eXoPlugin
         public void OnAfterGameLaunched(IGame game, IAdditionalApplication app, IEmulator emulator)
         {
             GameLaunched = game;
+            
+            ////if user starts the eXoDOS entry in LB:
+            //if (game.Title == "eXoDOS")
+            //{
+            //    if (!File.Exists(Path.Combine(new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName, "eXo", "Update", "userwantsupdate.yes")))
+            //    {
+            //        // write the check file
+            //        try
+            //        {
+            //            using (StreamWriter sw = File.CreateText(Path.Combine(new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName, "eXo", "Update", "userwantsupdate.yes")))
+            //            {
+            //                sw.WriteLine("Update will be launched on next LaunchBox shutdown! ");
+            //            }
+            //        }
+            //        catch (Exception Ex)
+            //        {
+            //            Console.WriteLine(Ex.ToString());
+            //        }
+            //    }
+            //}
         }
 
         public void OnBeforeGameConfigurationOpens(IGame game)
@@ -134,13 +168,22 @@ namespace eXoPlugin
 
         public void OnGameExited()
         {
-            //throw new NotImplementedException();
-            //PluginHelper.DataManager.ForceReload();
-            //PluginHelper.DataManager.ReloadIfNeeded();
 
             var game = GameLaunched;    // get the property
             UpdateInstallFlag(game);    // do the magic
             GameLaunched = null;        // reset property
+
+            // reload the XML files if the eXoDOS Updater was called
+            if (game.Title == "eXoDOS")
+            {
+
+                //PluginHelper.DataManager.ForceReload();
+                //PluginHelper.DataManager.ReloadIfNeeded();
+                // both are not working - they don't reload the "new" replaced XML file, but they save the current RAM state back to the XML (so they get overwritten)
+
+            }
+
+
         }
 
         public IEnumerable<IGameMenuItem> GetMenuItems(params IGame[] selectedGames)
@@ -206,13 +249,15 @@ namespace eXoPlugin
 
             if (enitemList.Count > 0)
             {
+
                 returnList.Add(new GameMenuItem("English Extras", enitemList, "english-flag.png"));
+                
             }
 
-            
- 
+            /*
             // Add the language pack extra files as menue entries
             String language = "";
+            var lpitemList = new List<IGameMenuItem>();
 
             // do it for each installed language pack
             foreach (var languagefile in new DirectoryInfo(Path.Combine(basePath, "eXo", "util")).GetFiles("*.LANG"))
@@ -221,7 +266,7 @@ namespace eXoPlugin
                 language = Path.GetFileNameWithoutExtension(languagefile.ToString().ToLower());
 
                 // Add the language pack extras files as menu entries
-                var lpitemList = new List<IGameMenuItem>();
+                lpitemList.Clear();
                 var lpgamePath = gamePath.Replace("!dos\\", "!dos\\!" + language + "\\");
 
                 foreach (var filename in new DirectoryInfo(Path.Combine(lpgamePath, "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
@@ -231,14 +276,16 @@ namespace eXoPlugin
 
                 if (lpitemList.Count > 0)
                 {
-                    returnList.Add(new GameMenuItem("German Extras", lpitemList, "german-flag.png"));
+                    
+                    returnList.Add(new GameMenuItem(language[0].ToString().ToUpper() + language.Substring(1) + " Extras", lpitemList, language.ToString() + "-flag.png"));
+
                 }
 
-            }
+            }*/
 
             return returnList;
 
-         }
+        }
     }
 
 
