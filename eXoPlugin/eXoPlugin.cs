@@ -23,33 +23,12 @@ namespace eXoPlugin
         {
             
             
-            //if (eventType == SystemEventTypes.LaunchBoxStartupCompleted || eventType == SystemEventTypes.BigBoxStartupCompleted)
-            //{
-                // Load list
-                
-
-                // update each game
-                //game = GetGameById("42e8839e-58cd-4d85-a628-827ff8a3ea91");
-                //System.Windows.MessageBox.Show(game.Series.ToString());
-                //game.Series = "TEST";
-                //System.Windows.MessageBox.Show("Series wurde gesetzt!");
-                //PluginHelper.LaunchBoxMainViewModel?.RefreshData();
-            //}
-
-            //if (eventType == SystemEventTypes.LaunchBoxShutdownBeginning)
-            //{
-            //    var eventbasePath = new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName;
-            //    if (File.Exists(Path.Combine(eventbasePath, "eXo", "Update", "userwantsupdate.yes")))
-            //    {
-            //        System.Windows.MessageBox.Show("eXoDOS Update starts");
-            //        Process.Start(Path.Combine(eventbasePath, "eXo", "Update", "update.bat"));
-            //    }
-            //}
-
             // wait for Launchbox to be loaded completely
             if (eventType == SystemEventTypes.LaunchBoxStartupCompleted
                 || eventType == SystemEventTypes.BigBoxStartupCompleted)
             {
+                
+
                 // Check for the FAQ-file				
                 string checkFile = "";  // we need the root path + /eXo/util
                 var claunchBoxPath = (new FileInfo(AppDomain.CurrentDomain.BaseDirectory)).Directory.Parent.FullName;
@@ -138,7 +117,21 @@ namespace eXoPlugin
                 string[] folders = completeGamePath.Split(Path.DirectorySeparatorChar);                             // split into folder names
                 int folderCount = folders.Length;																	// get the number of folders
                 checkPath = Path.Combine(launchBoxPath, "eXo", folders[folderCount - 3], folders[folderCount - 1]);	 	// add gamefolder to checkPath
-                game.Installed = Directory.Exists(checkPath);           											// if path exists, set Installed = true, otherwise set Installed = false
+
+                //check the base pack path and every language pack (maybe change this to a dynamically call when checking the *.LANG files)
+                if (Directory.Exists(Path.Combine(launchBoxPath, "eXo", folders[folderCount - 3], folders[folderCount - 1])) 
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!german", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!chinese", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!french", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!italian", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!korean", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!polish", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!russian", folders[folderCount - 3], folders[folderCount - 1]))
+                    || Directory.Exists(Path.Combine(launchBoxPath, "eXo", "!spanish", folders[folderCount - 3], folders[folderCount - 1])))
+                {
+                    game.Installed = true; // if path exists, set Installed = true, otherwise set Installed = false
+                }
+
                 PluginHelper.LaunchBoxMainViewModel?.RefreshData();     											// refresh the LB view
             }
 
@@ -152,26 +145,6 @@ namespace eXoPlugin
         public void OnAfterGameLaunched(IGame game, IAdditionalApplication app, IEmulator emulator)
         {
             GameLaunched = game;
-            
-            ////if user starts the eXoDOS entry in LB:
-            //if (game.Title == "eXoDOS")
-            //{
-            //    if (!File.Exists(Path.Combine(new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName, "eXo", "Update", "userwantsupdate.yes")))
-            //    {
-            //        // write the check file
-            //        try
-            //        {
-            //            using (StreamWriter sw = File.CreateText(Path.Combine(new FileInfo(AppDomain.CurrentDomain.BaseDirectory).Directory.Parent.FullName, "eXo", "Update", "userwantsupdate.yes")))
-            //            {
-            //                sw.WriteLine("Update will be launched on next LaunchBox shutdown! ");
-            //            }
-            //        }
-            //        catch (Exception Ex)
-            //        {
-            //            Console.WriteLine(Ex.ToString());
-            //        }
-            //    }
-            //}
         }
 
         public void OnBeforeGameConfigurationOpens(IGame game)
@@ -195,17 +168,6 @@ namespace eXoPlugin
             var game = GameLaunched;    // get the property
             UpdateInstallFlag(game);    // do the magic
             GameLaunched = null;        // reset property
-
-            // reload the XML files if the eXoDOS Updater was called
-            if (game.Title == "eXoDOS")
-            {
-
-                //PluginHelper.DataManager.ForceReload();
-                //PluginHelper.DataManager.ReloadIfNeeded();
-                // both are not working - they don't reload the "new" replaced XML file, but they save the current RAM state back to the XML (so they get overwritten)
-
-            }
-
 
         }
 
@@ -261,50 +223,389 @@ namespace eXoPlugin
             }
 
 
+            //*********** EXTRAS ENTRIES ************//
 
 
             // Add the base pack extras files as menu entries
-            var enitemList = new List<IGameMenuItem>();
-            foreach (var filename in new DirectoryInfo(Path.Combine(gamePath, "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+            var BPitemList = new List<IGameMenuItem>();
+
+            if (Directory.Exists(Path.Combine(gamePath, "Extras")))
             {
-                enitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
-            }
-
-            if (enitemList.Count > 0)
-            {
-
-                returnList.Add(new GameMenuItem("English Extras", enitemList, "english-flag.png"));
-                
-            }
-
-            /*
-            // Add the language pack extra files as menue entries
-            String language = "";
-            var lpitemList = new List<IGameMenuItem>();
-
-            // do it for each installed language pack
-            foreach (var languagefile in new DirectoryInfo(Path.Combine(basePath, "eXo", "util")).GetFiles("*.LANG"))
-            {
-                //get language from .LANG filename, e.g. GERMAN.LANG --> german
-                language = Path.GetFileNameWithoutExtension(languagefile.ToString().ToLower());
-
-                // Add the language pack extras files as menu entries
-                lpitemList.Clear();
-                var lpgamePath = gamePath.Replace("!dos\\", "!dos\\!" + language + "\\");
-
-                foreach (var filename in new DirectoryInfo(Path.Combine(lpgamePath, "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                foreach (var filename in new DirectoryInfo(Path.Combine(gamePath, "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
                 {
-                    lpitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    BPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
                 }
 
-                if (lpitemList.Count > 0)
+                if (BPitemList.Count > 0)
                 {
-                    
-                    returnList.Add(new GameMenuItem(language[0].ToString().ToUpper() + language.Substring(1) + " Extras", lpitemList, language.ToString() + "-flag.png"));
+
+                    returnList.Add(new GameMenuItem("English Extras", BPitemList, "english-flag.png"));
 
                 }
+            }
 
-            }*/
+            // Add the language pack extra files as menue entries (maybe change this to a dynamically call when checking the *.LANG files)
+
+            // GERMAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-German.lang")))
+            {
+
+                var GLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!german\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!german\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        GLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (GLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("German Extras", GLPitemList, "german-flag.png"));
+
+                    }
+                }
+
+            }
+
+            // POLISH LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Polish.lang")))
+            {
+                var PLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!polish\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!polish\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        PLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (PLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Polish Extras", PLPitemList, "polish-flag.png"));
+
+                    }
+                }
+            }
+
+            // FRENCH LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-French.lang")))
+            {
+                var FLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!french\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!french\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        FLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (FLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("French Extras", FLPitemList, "french-flag.png"));
+
+                    }
+                }
+            }
+
+            // ITALIAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Italian.lang")))
+            {
+                var ILPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!italian\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!italian\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        ILPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (ILPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Italian Extras", ILPitemList, "italian-flag.png"));
+
+                    }
+                }
+            }
+
+            // SPANISH LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Spanish.lang")))
+            {
+                var SLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!spanish\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!spanish\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        SLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (SLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Spanish Extras", SLPitemList, "spanish-flag.png"));
+
+                    }
+                }
+            }
+
+            // RUSSIAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Russian.lang")))
+            {
+                var RLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!russian\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!russian\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        RLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (RLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Russian Extras", RLPitemList, "russian-flag.png"));
+
+                    }
+                }
+            }
+
+            // KOREAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Korean.lang")))
+            {
+                var KLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!korean\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!korean\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        KLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (KLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Korean Extras", KLPitemList, "korean-flag.png"));
+
+                    }
+                }
+            }
+
+            // CHINESE LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Chinese.lang")))
+            {
+                var CLPitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!chinese\\"), "Extras")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!chinese\\"), "Extras")).GetFiles("*.*").Where(x => x.Name != "Alternate Launcher.bat"))
+                    {
+                        CLPitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (CLPitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Chinese Extras", CLPitemList, "chinese-flag.png"));
+
+                    }
+                }
+            }
+
+
+            //*********** MAGAZINE LINK ENTRIES ************//
+
+            // Add the base pack magazine links as menu entries
+            var BPmagazineitemList = new List<IGameMenuItem>();
+
+            if (Directory.Exists(Path.Combine(gamePath, "Magazines")))
+            {
+                foreach (var filename in new DirectoryInfo(Path.Combine(gamePath, "Magazines")).GetFiles("*.*"))
+                {
+                    BPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                }
+
+                if (BPmagazineitemList.Count > 0)
+                {
+
+                    returnList.Add(new GameMenuItem("English Magazines", BPmagazineitemList, "english-flag.png"));
+
+                }
+            }
+
+            // Add the language pack magazine links as menue entries (maybe change this to a dynamically call when checking the *.LANG files)
+
+            // GERMAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-German.lang")))
+            {
+                var GLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!german\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!german\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        GLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (GLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("German Magazines", GLPmagazineitemList, "german-flag.png"));
+
+                    }
+                }
+            }
+
+            // POLISH LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Polish.lang")))
+            {
+                var PLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!polish\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!polish\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        PLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (PLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Polish Magazines", PLPmagazineitemList, "polish-flag.png"));
+
+                    }
+                }
+            }
+
+            // FRENCH LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-French.lang")))
+            {
+                var FLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!french\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!french\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        FLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (FLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("French Magazines", FLPmagazineitemList, "french-flag.png"));
+
+                    }
+                }
+            }
+
+            // ITALIAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Italian.lang")))
+            {
+                var ILPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!italian\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!italian\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        ILPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (ILPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Italian Magazines", ILPmagazineitemList, "italian-flag.png"));
+
+                    }
+                }
+            }
+
+            // SPANISH LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Spanish.lang")))
+            {
+                var SLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!spanish\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!spanish\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        SLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (SLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Spanish Magazines", SLPmagazineitemList, "spanish-flag.png"));
+
+                    }
+                }
+            }
+
+            // RUSSIAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Russian.lang")))
+            {
+                var RLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!russian\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!russian\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        RLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (RLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Russian Magazines", RLPmagazineitemList, "russian-flag.png"));
+
+                    }
+                }
+            }
+
+            // KOREAN LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Korean.lang")))
+            {
+                var KLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!korean\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!korean\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        KLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (KLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Korean Magazines", KLPmagazineitemList, "korean-flag.png"));
+
+                    }
+                }
+            }
+
+            // CHINESE LANGUAGE PACK
+            if (File.Exists(Path.Combine(basePath, "eXo", "util", "eXoDOS-Chinese.lang")))
+            {
+                var CLPmagazineitemList = new List<IGameMenuItem>();
+
+                if (Directory.Exists(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!chinese\\"), "Magazines")))
+                {
+                    foreach (var filename in new DirectoryInfo(Path.Combine(gamePath.Replace("!dos\\", "!dos\\!chinese\\"), "Magazines")).GetFiles("*.*"))
+                    {
+                        CLPmagazineitemList.Add(new GameMenuItem(selectedGames[0], filename.ToString()));
+                    }
+
+                    if (CLPmagazineitemList.Count > 0)
+                    {
+
+                        returnList.Add(new GameMenuItem("Chinese Magazines", CLPmagazineitemList, "chinese-flag.png"));
+
+                    }
+                }
+            }
 
             return returnList;
 
@@ -334,7 +635,19 @@ namespace eXoPlugin
             this.addappfilename = addappfilename;
             this.Caption = Path.GetFileNameWithoutExtension(addappfilename).ToString();
             this.Enabled = true;
-            this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(addappfilename).ToBitmap();
+
+            if (addappfilename.Contains("\\Magazines\\")) // icon from file or magazine icon?
+            { 
+                var basePath = (new FileInfo(AppDomain.CurrentDomain.BaseDirectory)).Directory.Parent.FullName;
+                var iconPath = Path.Combine(basePath, "eXo", "util", "magazine.png");
+                this.Icon = Image.FromFile(iconPath);
+            } 
+            else
+            {
+                this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(addappfilename).ToBitmap();
+            }
+
+           
         }
 
         public GameMenuItem(IGame game, string addappfilename, string Caption)
@@ -354,7 +667,14 @@ namespace eXoPlugin
             this.Children = children;
             this.Enabled = true;
             this.flag = flag;
-            this.Icon = Image.FromFile(iconPath);
+            if (File.Exists(iconPath))
+            {
+                this.Icon = Image.FromFile(iconPath);
+            }
+            else
+            {
+                this.Icon = Image.FromFile(Path.Combine(basePath, "eXo", "util", "no-flag.png"));
+            }
         }
 
         public void OnSelect(params IGame[] games)
