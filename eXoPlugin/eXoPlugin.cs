@@ -5,10 +5,12 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-//using System.Windows;
+using System.Security.Cryptography.X509Certificates;
+using System.Windows;
 using System.Windows.Forms;
 using Unbroken.LaunchBox.Plugins;
 using Unbroken.LaunchBox.Plugins.Data;
+using Unbroken.LaunchBox.Plugins.RetroAchievements;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Header;
 
 namespace eXoPlugin
@@ -19,6 +21,20 @@ namespace eXoPlugin
 
         public void OnEventRaised(string eventType)
         {
+            
+            
+            //if (eventType == SystemEventTypes.LaunchBoxStartupCompleted || eventType == SystemEventTypes.BigBoxStartupCompleted)
+            //{
+                // Load list
+                
+
+                // update each game
+                //game = GetGameById("42e8839e-58cd-4d85-a628-827ff8a3ea91");
+                //System.Windows.MessageBox.Show(game.Series.ToString());
+                //game.Series = "TEST";
+                //System.Windows.MessageBox.Show("Series wurde gesetzt!");
+                //PluginHelper.LaunchBoxMainViewModel?.RefreshData();
+            //}
 
             //if (eventType == SystemEventTypes.LaunchBoxShutdownBeginning)
             //{
@@ -81,7 +97,7 @@ namespace eXoPlugin
                         }
                         catch (Exception Ex)
                         {
-                            Console.WriteLine(Ex.ToString());
+                            System.Console.WriteLine(Ex.ToString());
                         }
 
                         // open the FAQ-Website
@@ -93,8 +109,15 @@ namespace eXoPlugin
                         Process.Start(psi);
                     }
                 }
+
+
+
             }
         }
+
+
+
+
     }
 
 
